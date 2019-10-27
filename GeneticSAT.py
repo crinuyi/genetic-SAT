@@ -1,16 +1,15 @@
 import random
 
 import numpy
-from deap import creator, base, algorithms
-from deap.benchmarks import tools
+from deap import creator, base, tools, algorithms
 from numpy.ma import absolute
 
 
 def check_disjunction(clause, chromosome):
     result = 0
-    for element_index in range(len(clause)):
-        variable_index = absolute(clause[element_index])
-        if clause[element_index] > 0:
+    for element in clause:
+        variable_index = absolute(element) - 1
+        if element > 0:
             result |= chromosome[variable_index]
         else:
             result |= not chromosome[variable_index]
@@ -39,10 +38,10 @@ class GeneticSAT:
         result = 0
         for clause in self.formula:
             result += check_disjunction(clause, chromosome)
-        return result
+        return [result]
 
     def run(self):
-        creator.create("FitnessSAT", base.Fitness)
+        creator.create("FitnessSAT", base.Fitness, weights=(1.0,))
         creator.create("Individual", list, fitness=creator.FitnessSAT)
 
         toolbox = base.Toolbox()
