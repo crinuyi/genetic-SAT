@@ -1,7 +1,10 @@
 def check_disjunction(clause):
     result = 0
     for element_index in range(len(clause)):
-        result |= clause[element_index]
+        if element_index > 0:
+            result |= clause[element_index]
+        else:
+            result |= not clause[-element_index]
     return result
 
 
