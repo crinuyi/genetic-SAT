@@ -1,6 +1,7 @@
 import random
 
-from deap import creator, base
+import numpy
+from deap import creator, base, algorithms
 from deap.benchmarks import tools
 from numpy.ma import absolute
 
@@ -17,8 +18,13 @@ def check_disjunction(clause, chromosome):
 
 
 class GeneticSAT:
-    def __init__(self, formula):
+    def __init__(self, formula, population_size, generations):
         self.formula = formula
+        self.population_size = population_size
+        self.generations = generations
+        self.population = None
+        self.best = None
+        self.log = None
         self.number_of_variables = self.count_number_of_variables()
 
     def count_number_of_variables(self):
@@ -44,3 +50,27 @@ class GeneticSAT:
         toolbox.register("individual", tools.initRepeat, creator.Individual,
                          toolbox.attr_bool, self.count_number_of_variables())
         toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+
+        toolbox.register("evaluate", self.fitness)
+        toolbox.register("mate", tools.cxTwoPoint)
+        toolbox.register("mutate", tools.mutFlipBit, indpb=0.2)
+        toolbox.register("select", tools.selTournament, tournsize=3)
+
+        self.population = toolbox.population(n=self.population_size)
+
+        self.best = tools.HallOfFame(1)
+        stats = tools.Statistics(lambda ind: ind.fitness.values)
+        stats.register("avg", numpy.mean)
+        stats.register("std", numpy.std)
+        stats.register("min", numpy.min)
+        stats.register("max", numpy.max)
+
+        self.population, self.log = algorithms.eaSimple(
+            self.population,
+            toolbox,
+            cxpb=0.5,
+            mutpb=0.2,
+            ngen=self.generations,
+            stats=stats,
+            halloffame=self.best,
+            verbose=False)
